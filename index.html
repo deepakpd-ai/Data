@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Data Entry</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #f0f4f8;
+      font-family: 'Segoe UI', Arial, sans-serif;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+      padding: 40px 36px 36px;
+      width: 100%;
+      max-width: 420px;
+    }
+
+    .card h1 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: #1a202c;
+      margin-bottom: 6px;
+    }
+
+    .card p.subtitle {
+      font-size: 0.9rem;
+      color: #718096;
+      margin-bottom: 28px;
+    }
+
+    label {
+      display: block;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #4a5568;
+      margin-bottom: 8px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 11px 14px;
+      border: 1.5px solid #cbd5e0;
+      border-radius: 8px;
+      font-size: 1rem;
+      color: #2d3748;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    input[type="text"]:focus {
+      border-color: #4a90e2;
+      box-shadow: 0 0 0 3px rgba(74,144,226,0.15);
+    }
+
+    button {
+      margin-top: 20px;
+      width: 100%;
+      padding: 12px;
+      background: #4a90e2;
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s, opacity 0.2s;
+    }
+
+    button:hover:not(:disabled) { background: #357abd; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    #status {
+      margin-top: 16px;
+      font-size: 0.88rem;
+      min-height: 22px;
+      text-align: center;
+      border-radius: 6px;
+      padding: 6px 10px;
+    }
+
+    #status.success { background: #e6f9f0; color: #276749; }
+    #status.error   { background: #fff5f5; color: #c53030; }
+    #status.loading { color: #4a5568; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Data Entry</h1>
+    <p class="subtitle">Enter a value below to save it to the Google Sheet.</p>
+
+    <label for="dataInput">Data</label>
+    <input
+      type="text"
+      id="dataInput"
+      placeholder="Type your data here…"
+      autocomplete="off"
+    />
+
+    <button id="submitBtn" onclick="submitData()">Submit</button>
+
+    <div id="status"></div>
+  </div>
+
+  <script>
+    // ← PASTE YOUR APPS SCRIPT WEB APP URL HERE
+    const APPS_SCRIPT_URL = "YOUR_APPS_SCRIPT_WEB_APP_URL";
+
+    async function submitData() {
+      const input  = document.getElementById("dataInput");
+      const btn    = document.getElementById("submitBtn");
+      const status = document.getElementById("status");
+      const value  = input.value.trim();
+
+      if (!value) {
+        status.className = "error";
+        status.textContent = "Please enter a value before submitting.";
+        return;
+      }
+
+      btn.disabled = true;
+      status.className = "loading";
+      status.textContent = "Saving…";
+
+      try {
+        const res  = await fetch(APPS_SCRIPT_URL, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ data: value }),
+          mode:    "no-cors"   // Apps Script requires no-cors
+        });
+
+        // no-cors means we won't get a readable response, so treat reach = success
+        status.className = "success";
+        status.textContent = "✓ Data saved successfully!";
+        input.value = "";
+      } catch (err) {
+        status.className = "error";
+        status.textContent = "⚠ Could not save. Check your connection and URL.";
+        console.error(err);
+      } finally {
+        btn.disabled = false;
+      }
+    }
+
+    // Allow Enter key to submit
+    document.getElementById("dataInput")
+      .addEventListener("keydown", e => { if (e.key === "Enter") submitData(); });
+  </script>
+</body>
+</html>
